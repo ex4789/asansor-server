@@ -30,13 +30,19 @@ app.get('/', (req, res) => {
   res.send('Sunucu canavar gibi calisiyor reis!');
 });
 
-// Tüm bina kayıtlarını getir
 app.get('/binalar', (req, res) => {
   const veri = veriOku();
   res.json(veri);
 });
 
-// Tüm bina kayıtlarını kaydet (uygulama her değişiklikte tüm listeyi gönderir)
 app.post('/binalar', (req, res) => {
   const yeniVeri = req.body;
-  if
+  if (!Array.isArray(yeniVeri)) {
+    return res.status(400).json({ hata: 'Veri bir liste (array) olmalı' });
+  }
+  veriYaz(yeniVeri);
+  res.json({ basarili: true, kayitSayisi: yeniVeri.length });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(P
