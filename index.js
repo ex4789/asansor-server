@@ -17,7 +17,7 @@ function veriOku() {
       return JSON.parse(ham);
     }
   } catch (e) {
-    console.error('Veri okuma hatası:', e);
+    console.error('Veri okuma hatasi:', e);
   }
   return [];
 }
@@ -38,11 +38,14 @@ app.get('/binalar', (req, res) => {
 app.post('/binalar', (req, res) => {
   const yeniVeri = req.body;
   if (!Array.isArray(yeniVeri)) {
-    return res.status(400).json({ hata: 'Veri bir liste (array) olmalı' });
+    return res.status(400).json({ hata: 'Veri bir liste (array) olmali' });
   }
   veriYaz(yeniVeri);
   res.json({ basarili: true, kayitSayisi: yeniVeri.length });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(P
+
+app.listen(PORT, function () {
+  console.log('Sunucu ' + PORT + ' portunda hazir...');
+});
