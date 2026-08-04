@@ -1,0 +1,13 @@
+﻿.dart_tool/
+.flutter-plugins-dependencies
+build/
+.idea/
+*.iml
+.metadata
+android/.gradle/
+android/app/debug/
+ios/Flutter/ephemeral/
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+node_modules/
