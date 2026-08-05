@@ -36,6 +36,7 @@ app.get('/binalar', (req, res) => {
 });
 
 app.post('/binalar', (req, res) => {
+  console.log('POST /binalar istegi geldi! Zaman:', new Date().toISOString());
   const yeniVeri = req.body;
   if (!Array.isArray(yeniVeri)) {
     return res.status(400).json({ hata: 'Veri bir liste (array) olmali' });

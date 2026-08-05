@@ -1,10 +1,10 @@
 import 'dart:convert';
-// WEB'DE DOSYA İNDİRMEK İÇİN GEREKLİ KÜTÜPHANELER
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 // Web için özel indirme paketi (Sadece web ortamında çalışır)
 import 'package:universal_html/html.dart' as html;
@@ -249,28 +249,66 @@ class _AnaSayfaState extends State<AnaSayfa> {
     super.initState();
     verileriYukle();
   }
+final String sunucuAdresi = 'https://asansor-server.onrender.com';
 
-  Future<void> verileriYukle() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? kayitliVeri = prefs.getString(hafizaAnahtari);
-    if (kayitliVeri != null) {
-      List decoded = jsonDecode(kayitliVeri);
+Future<void> verileriYukle() async {
+  // Önce sunucudan çekmeyi dene
+  try {
+    final response = await http
+        .get(Uri.parse('$sunucuAdresi/binalar'))
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode == 200) {
+      List decoded = jsonDecode(response.body);
       setState(() {
         asansorler = decoded.map((e) {
           var bina = AsansorModel.fromJson(e);
-          bina.guncelAyiEkle(); 
+          bina.guncelAyiEkle();
           return bina;
         }).toList();
       });
-      verileriKaydet();
+      await yerelKaydet();
+      return;
     }
+  } catch (e) {
+    debugPrint('Sunucudan veri cekilemedi, yerel veriye bakiliyor: $e');
   }
 
-  Future<void> verileriKaydet() async {
-    final prefs = await SharedPreferences.getInstance();
-    String encoded = jsonEncode(asansorler.map((e) => e.toJson()).toList());
-    await prefs.setString(hafizaAnahtari, encoded);
+  // Sunucuya ulasilamazsa yerel kayittan yukle
+  final prefs = await SharedPreferences.getInstance();
+  final String? kayitliVeri = prefs.getString(hafizaAnahtari);
+  if (kayitliVeri != null) {
+    List decoded = jsonDecode(kayitliVeri);
+    setState(() {
+      asansorler = decoded.map((e) {
+        var bina = AsansorModel.fromJson(e);
+        bina.guncelAyiEkle();
+        return bina;
+      }).toList();
+    });
   }
+}
+Future<void> verileriKaydet() async {
+  debugPrint('===TEST=== verileriKaydet calisti');
+  await yerelKaydet();
+  try {
+    final encoded = jsonEncode(asansorler.map((e) => e.toJson()).toList());
+    await http
+        .post(
+          Uri.parse('$sunucuAdresi/binalar'),
+          headers: {'Content-Type': 'application/json'},
+          body: encoded,
+        )
+        .timeout(const Duration(seconds: 20));
+  } catch (e) {
+    debugPrint('Sunucuya kaydedilemedi (internet yok olabilir): $e');
+  }
+}
+
+Future<void> yerelKaydet() async {
+  final prefs = await SharedPreferences.getInstance();
+  String encoded = jsonEncode(asansorler.map((e) => e.toJson()).toList());
+  await prefs.setString(hafizaAnahtari, encoded);
+}
 
   // WEB VE MOBİL UYUMLU GÜVENLİ DOSYA İNDİRME
   Future<void> yedekDosyaIndir() async {
